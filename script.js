@@ -1,18 +1,10 @@
-/* script.js
-   Simple ToolHub demo behavior.
-   - Defines tools (some allowed, some disabled)
-   - Renders selector, moves slider under selected button
-   - Run button: if allowed -> perform safe demo actions
-               if disabled -> show toast message
-   - Safe demo actions: URL shortener (client-side), QR generator
-*/
-
+// Define tools
 const TOOLS = [
-  { id: "yt", label: "YouTube Downloader", allowed: false, desc: "Disabled (downloaders not allowed)" },
-  { id: "tt", label: "TikTok Downloader", allowed: false, desc: "Disabled (downloaders not allowed)" },
-  { id: "lv", label: "Linkvertise Bypasser", allowed: false, desc: "Disabled (bypassers not allowed)" },
-  { id: "short", label: "URL Shortener", allowed: true, desc: "Creates a short code stored locally" },
-  { id: "qr", label: "QR Generator", allowed: true, desc: "Generates a QR image from the URL" }
+  { id: "yt", label: "YouTube Downloader", allowed: false },
+  { id: "tt", label: "TikTok Downloader", allowed: false },
+  { id: "lv", label: "Linkvertise Bypasser", allowed: false },
+  { id: "short", label: "URL Shortener", allowed: true },
+  { id: "qr", label: "QR Generator", allowed: true }
 ];
 
 const selectorEl = document.getElementById("toolSelector");
@@ -25,10 +17,10 @@ const toastEl = document.getElementById("toast");
 
 let selectedTool = TOOLS[0].id;
 
-// render tool buttons
+// Render tool buttons
 function renderTools() {
   selectorEl.innerHTML = "";
-  TOOLS.forEach((t, i) => {
+  TOOLS.forEach((t) => {
     const btn = document.createElement("button");
     btn.className = "tool-btn";
     btn.textContent = t.label;
@@ -37,34 +29,30 @@ function renderTools() {
     btn.addEventListener("click", () => selectTool(t.id));
     selectorEl.appendChild(btn);
   });
-  // initial slider placement after a tick
   requestAnimationFrame(() => moveSliderTo(selectedTool));
 }
 
+// Select a tool
 function selectTool(id) {
   selectedTool = id;
-  // visual move
   moveSliderTo(id);
-  // optional: update placeholder based on tool
-  const tool = TOOLS.find(x => x.id === id);
-  if(tool) urlInput.placeholder = tool.allowed ? `Enter URL for ${tool.label}...` : `Enter URL (this tool is disabled)...`;
-  // clear result
+  const tool = TOOLS.find(t => t.id === id);
+  if(tool) urlInput.placeholder = tool.allowed ? `Enter URL for ${tool.label}...` : `Enter URL (disabled)...`;
   hideResult();
 }
 
-// move slider element under button
+// Move slider under selected button
 function moveSliderTo(id) {
   const btn = Array.from(selectorEl.children).find(b => b.dataset.id === id);
   if (!btn) return;
   const wrapRect = selectorEl.getBoundingClientRect();
   const btnRect = btn.getBoundingClientRect();
-  const left = btnRect.left - wrapRect.left + 6; // 6 = selector padding
-  const width = btnRect.width;
+  const left = btnRect.left - wrapRect.left + 6;
   sliderEl.style.transform = `translateX(${left}px)`;
-  sliderEl.style.width = `${width}px`;
+  sliderEl.style.width = `${btnRect.width}px`;
 }
 
-// toast
+// Toast
 let toastTimer = null;
 function showToast(msg, ms=2500) {
   toastEl.hidden = false;
@@ -73,7 +61,7 @@ function showToast(msg, ms=2500) {
   toastTimer = setTimeout(() => { toastEl.hidden = true; }, ms);
 }
 
-// results handling
+// Show/Hide result
 function showResult(html) {
   resultInner.innerHTML = html;
   resultArea.hidden = false;
@@ -83,49 +71,14 @@ function hideResult() {
   resultArea.hidden = true;
 }
 
-// actions
-async function handleRun() {
-  const url = (urlInput.value || "").trim();
-  const tool = TOOLS.find(t => t.id === selectedTool);
-  if (!tool) { showToast("No tool selected"); return; }
-  if (!url) { showToast("Paste a URL or text first"); return; }
-
-  if (!tool.allowed) {
-    showToast(`${tool.label} is disabled here. Coming soon or restricted.`);
-    return;
-  }
-
-  // Allowed tools: implement safe demos
-  if (tool.id === "short") {
-    // simple client-side shortener: generate code + save map to localStorage
-    const code = generateShortCode(url);
-    saveShort(url, code);
-    const localUrl = `${location.origin}${location.pathname}#r=${code}`;
-    showResult(`<div><strong>Short URL:</strong><div style="margin-top:8px"><code>${localUrl}</code></div><div style="margin-top:10px;color:var(--muted)">This demo stores mapping in your browser only (localStorage)</div></div>`);
-    showToast("Short link created");
-    return;
-  }
-
-  if (tool.id === "qr") {
-    // use Google Charts QR generator
-    const encoded = encodeURIComponent(url);
-    const size = 220;
-    const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encoded}`;
-    showResult(`<div style="display:flex;gap:12px;align-items:center"><img src="${qrUrl}" width="${size}" height="${size}" alt="QR"/><div><strong>QR for:</strong><div style="margin-top:6px"><code>${escapeHtml(url)}</code></div></div></div>`);
-    showToast("QR generated");
-    return;
-  }
-
-  // fallback
-  showToast("Tool action not implemented in demo");
-}
-
-// small helpers
+// Generate short code
 function generateShortCode(url){
-  const seed = Math.random().toString(36).slice(2,8);
-  const hash = btoa(url).slice(0,6).replace(/=+$/,'');
-  return `${seed}${hash}`.slice(0,8);
+  const seed = Math.random().toString(36).slice(2,6);
+  const hash = btoa(url).slice(0,4).replace(/=+$/,'');
+  return (seed+hash).slice(0,8);
 }
+
+// Save short URL in localStorage
 function saveShort(url, code){
   const key = "toolhub_short_map";
   const raw = localStorage.getItem(key);
@@ -133,7 +86,8 @@ function saveShort(url, code){
   map[code] = { url, created: Date.now() };
   localStorage.setItem(key, JSON.stringify(map));
 }
-// on page load, if there's a hash like #r=CODE then try to resolve
+
+// Handle #r=CODE in URL (resolve short link)
 function handleHashResolve(){
   const hash = location.hash || "";
   if(hash.startsWith("#r=")){
@@ -144,23 +98,57 @@ function handleHashResolve(){
     const map = JSON.parse(raw);
     if(map[code]) {
       const entry = map[code];
-      // show resolved info with clickable link
       showResult(`<div><strong>Resolved short code:</strong> <code>${code}</code><div style="margin-top:8px">Original URL: <a href="${escapeHtml(entry.url)}" target="_blank" rel="noopener">${escapeHtml(entry.url)}</a></div></div>`);
     } else {
       showToast("Short code not found in local storage");
     }
   }
 }
+
+// Escape HTML
 function escapeHtml(s){
   return (s+"").replace(/[&<>"']/g, function(m){
     return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m];
   });
 }
 
-// init
+// Handle Run button
+function handleRun() {
+  const url = (urlInput.value || "").trim();
+  const tool = TOOLS.find(t => t.id === selectedTool);
+  if (!tool) { showToast("No tool selected"); return; }
+  if (!url) { showToast("Paste a URL or text first"); return; }
+
+  if (!tool.allowed) {
+    showToast(`${tool.label} is disabled here. Coming soon.`);
+    return;
+  }
+
+  if(tool.id === "short") {
+    const code = generateShortCode(url);
+    saveShort(url, code);
+    const localUrl = `${location.origin}${location.pathname}#r=${code}`;
+    showResult(`<div><strong>Short URL:</strong><div style="margin-top:8px"><code>${localUrl}</code></div><div style="margin-top:6px;color:var(--muted)">Stored in your browser only (localStorage)</div></div>`);
+    showToast("Short link created");
+    return;
+  }
+
+  if(tool.id === "qr") {
+    const encoded = encodeURIComponent(url);
+    const size = 220;
+    const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encoded}`;
+    showResult(`<div style="display:flex;gap:12px;align-items:center"><img src="${qrUrl}" width="${size}" height="${size}" alt="QR"/><div><strong>QR for:</strong><div style="margin-top:6px"><code>${escapeHtml(url)}</code></div></div></div>`);
+    showToast("QR generated");
+    return;
+  }
+
+  showToast("Tool action not implemented.");
+}
+
+// Init
 renderTools();
 selectTool(selectedTool);
 runBtn.addEventListener("click", handleRun);
-window.addEventListener("resize", () => moveSliderTo(selectedTool));
 urlInput.addEventListener("keydown", (e)=> { if(e.key === "Enter") handleRun(); });
+window.addEventListener("resize", () => moveSliderTo(selectedTool));
 handleHashResolve();
