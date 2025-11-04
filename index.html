@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ToolHub — Full Page Demo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="page-header">
+    <h1>ToolHub</h1>
+    <p class="desc">A lightweight, full-page tool hub. Select a tool, paste a link, and run safe demos. Download/bypass tools are shown but disabled.</p>
+  </header>
+
+  <main class="main-content">
+    <!-- top tool selector -->
+    <section class="tool-section">
+      <h2>Main Tool</h2>
+      <div class="selector-wrap">
+        <div class="selector" id="toolSelector"></div>
+        <div class="slider" id="slider"></div>
+      </div>
+      <div class="action-row">
+        <input id="urlInput" class="url-input" placeholder="Paste a URL or text here..." />
+        <button id="runBtn" class="run-btn">Run</button>
+      </div>
+      <section id="resultArea" class="result-area" hidden>
+        <div id="resultInner"></div>
+      </section>
+    </section>
+
+    <!-- additional tools -->
+    <section class="extra-tools">
+      <h2>Other Tools / Safe Demos</h2>
+      <p class="desc">Try these fun demos to see how ToolHub can work for you.</p>
+      <div class="extra-tool-cards">
+        <div class="tool-card">
+          <h3>QR Generator</h3>
+          <p>Enter text or a URL to generate a QR code.</p>
+        </div>
+        <div class="tool-card">
+          <h3>URL Shortener</h3>
+          <p>Client-side demo: short codes stored in your browser.</p>
+        </div>
+        <div class="tool-card">
+          <h3>Coming Soon</h3>
+          <p>Other tools like image converter, metadata preview, etc.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- about -->
+    <section class="about-section">
+      <h2>About ToolHub</h2>
+      <p>ToolHub is a lightweight, legal tool demonstration page. All "download/bypass" buttons are disabled for safety. You can run client-side safe demos like QR code generation and URL shortener.</p>
+    </section>
+  </main>
+
+  <!-- footer -->
+  <footer class="page-footer">
+    <p>&copy; 2025 ToolHub Demo • Built lightweight for VS Code</p>
+  </footer>
+
+  <!-- toast -->
+  <div id="toast" class="toast" aria-live="polite" hidden></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
